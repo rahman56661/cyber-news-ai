@@ -8,23 +8,30 @@ const { startDailyFetchJob } = require("./cron/dailyFetchJob");
 
 const app = express();
 
-// Connect to MongoDB
 connectDB();
 
-// Middleware
 app.use(cors());
 app.use(express.json());
 
 // Serve generated audio files statically
 app.use("/audio", express.static(path.join(__dirname, "public/audio")));
 
-// Routes
+// API Routes
 app.use("/api/news", newsRoutes);
 
-// Health check
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", message: "Cyber News AI backend running" });
 });
+
+// Serve frontend build in production (combined single-service deployment)
+if (process.env.NODE_ENV === "production") {
+  const frontendDistPath = path.join(__dirname, "../frontend/dist");
+  app.use(express.static(frontendDistPath));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.join(frontendDistPath, "index.html"));
+  });
+}
 
 // Error handler
 app.use((err, req, res, next) => {
@@ -35,6 +42,5 @@ app.use((err, req, res, next) => {
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  // Start the daily cron job once server is up
   startDailyFetchJob();
-}); 
+});
