@@ -102,5 +102,3 @@ async function serveAudio(req, res) {
 }
 
 module.exports = { getAllNews, getNewsById, triggerManualRefresh, serveAudio };
-
-module.exports = { getAllNews, getNewsById, triggerManualRefresh };
