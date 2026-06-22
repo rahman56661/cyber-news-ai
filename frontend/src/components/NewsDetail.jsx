@@ -9,6 +9,9 @@ function NewsDetail({ news }) {
   const severity = getSeverity(news.title);
   const explanation = news.explanations?.[activeLang];
 
+  // Check audioData (new DB storage) OR audioUrl (old file-based, fallback)
+  const hasAudio = !!(explanation?.audioData || explanation?.audioUrl);
+
   return (
     <article className="news-detail">
       <div className="news-detail-top">
@@ -26,7 +29,7 @@ function NewsDetail({ news }) {
 
       <LanguageSwitcher activeLang={activeLang} onChange={setActiveLang} />
 
-      {explanation?.audioUrl ? (
+      {hasAudio ? (
         <AudioPlayer src={`/api/news/${news._id}/audio/${activeLang}`} />
       ) : (
         <div className="audio-unavailable mono">Audio not available for this language</div>

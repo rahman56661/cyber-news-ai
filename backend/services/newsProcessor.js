@@ -4,18 +4,14 @@ const { generateExplanations } = require("./aiService");
 const { generateAllAudio } = require("./ttsService");
 
 const LANGUAGES = ["en", "ta", "hi", "ml"];
-const MAX_ITEMS_PER_RUN = 15;       // never process more than this in one run
-const MAX_AGE_HOURS = 48;           // only consider news from last 48 hours
-const MAX_CONSECUTIVE_FAILURES = 3; // stop early if AI quota looks exhausted
+const MAX_ITEMS_PER_RUN = 15;
+const MAX_AGE_HOURS = 48;
+const MAX_CONSECUTIVE_FAILURES = 3;
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-/**
- * Keeps only recent items, sorted newest first, capped at MAX_ITEMS_PER_RUN.
- * Prevents backlog explosion and keeps daily AI token usage sustainable.
- */
 function filterAndLimitItems(items) {
   const cutoff = Date.now() - MAX_AGE_HOURS * 60 * 60 * 1000;
   return items
@@ -26,9 +22,7 @@ function filterAndLimitItems(items) {
 
 async function processNewsItem(rawItem) {
   const exists = await News.findOne({ link: rawItem.link });
-  if (exists) {
-    return { status: "skipped" };
-  }
+  if (exists) return { status: "skipped" };
 
   const newsDoc = new News({
     title: rawItem.title,
@@ -41,14 +35,17 @@ async function processNewsItem(rawItem) {
   await newsDoc.save();
 
   try {
+    // Step 1: AI explanation
     const { explanations, provider } = await generateExplanations(rawItem);
-    const audioUrls = await generateAllAudio(newsDoc._id.toString(), explanations);
+
+    // Step 2: TTS audio — ONE call only, returns base64 strings
     const audioData = await generateAllAudio(newsDoc._id.toString(), explanations);
-    
+
+    // Step 3: Save to DB
     for (const lang of LANGUAGES) {
       newsDoc.explanations[lang] = {
         text: explanations[lang] || "",
-        audioUrl: "",           // no longer used
+        audioUrl: "",
         audioData: audioData[lang] || "",
         audioMimeType: "audio/mpeg",
       };
@@ -58,7 +55,7 @@ async function processNewsItem(rawItem) {
     await newsDoc.save();
 
     console.log(`✅ Processed: "${newsDoc.title}" (via ${provider})`);
-    return { status: "processed", news: newsDoc };
+    return { status: "processed" };
   } catch (error) {
     console.error(`❌ Failed to process "${rawItem.title}": ${error.message}`);
     return { status: "failed" };
@@ -101,7 +98,6 @@ async function runDailyPipeline() {
   console.log(
     `🏁 Pipeline complete in ${duration}s — Processed: ${counts.processed}, Skipped: ${counts.skipped}, Failed: ${counts.failed}`
   );
-
   return counts;
 }
 
