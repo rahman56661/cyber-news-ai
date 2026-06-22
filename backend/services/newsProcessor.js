@@ -43,11 +43,14 @@ async function processNewsItem(rawItem) {
   try {
     const { explanations, provider } = await generateExplanations(rawItem);
     const audioUrls = await generateAllAudio(newsDoc._id.toString(), explanations);
-
+    const audioData = await generateAllAudio(newsDoc._id.toString(), explanations);
+    
     for (const lang of LANGUAGES) {
       newsDoc.explanations[lang] = {
         text: explanations[lang] || "",
-        audioUrl: audioUrls[lang] || "",
+        audioUrl: "",           // no longer used
+        audioData: audioData[lang] || "",
+        audioMimeType: "audio/mpeg",
       };
     }
     newsDoc.aiProvider = provider;

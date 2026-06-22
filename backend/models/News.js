@@ -2,8 +2,10 @@ const mongoose = require("mongoose");
 
 const languageExplanationSchema = new mongoose.Schema(
   {
-    text: { type: String, default: "" },       // AI generated detailed explanation
-    audioUrl: { type: String, default: "" },   // path to generated mp3 (e.g. /audio/{newsId}/ta.mp3)
+    text: { type: String, default: "" },
+    audioUrl: { type: String, default: "" },
+    audioData: { type: String, default: "" },  // Base64 audio data
+    audioMimeType: { type: String, default: "audio/mpeg" },
   },
   { _id: false }
 );

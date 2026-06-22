@@ -73,4 +73,34 @@ async function triggerManualRefresh(req, res) {
     }
 }
 
+/**
+ * GET /api/news/:id/audio/:lang
+ * Serves audio from MongoDB base64 data as mp3 stream
+ */
+async function serveAudio(req, res) {
+    try {
+        const { id, lang } = req.params;
+        const news = await News.findById(id).select("explanations");
+        if (!news) return res.status(404).json({ error: "News not found" });
+
+        const explanation = news.explanations?.[lang];
+        if (!explanation?.audioData) {
+            return res.status(404).json({ error: "Audio not available" });
+        }
+
+        const audioBuffer = Buffer.from(explanation.audioData, "base64");
+        res.set({
+            "Content-Type": "audio/mpeg",
+            "Content-Length": audioBuffer.length,
+            "Cache-Control": "public, max-age=86400",
+        });
+        res.send(audioBuffer);
+    } catch (error) {
+        console.error(`❌ serveAudio error: ${error.message}`);
+        res.status(500).json({ error: "Failed to serve audio" });
+    }
+}
+
+module.exports = { getAllNews, getNewsById, triggerManualRefresh, serveAudio };
+
 module.exports = { getAllNews, getNewsById, triggerManualRefresh };

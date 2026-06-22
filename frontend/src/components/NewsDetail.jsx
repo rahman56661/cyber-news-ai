@@ -27,7 +27,7 @@ function NewsDetail({ news }) {
       <LanguageSwitcher activeLang={activeLang} onChange={setActiveLang} />
 
       {explanation?.audioUrl ? (
-        <AudioPlayer src={explanation.audioUrl} />
+        <AudioPlayer src={`/api/news/${news._id}/audio/${activeLang}`} />
       ) : (
         <div className="audio-unavailable mono">Audio not available for this language</div>
       )}
