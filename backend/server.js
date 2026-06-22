@@ -20,7 +20,7 @@ app.use("/audio", express.static(path.join(__dirname, "public/audio")));
 app.use("/api/news", newsRoutes);
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", message: "Cyber News AI backend running" });
+  res.json({ ok: true });
 });
 
 // Serve frontend build in production (combined single-service deployment)
